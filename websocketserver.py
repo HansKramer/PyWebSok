@@ -150,10 +150,18 @@ class WebSocketServer():
     def __init__(self, port, connections=1000):
         syslog.syslog(syslog.LOG_INFO, "WebSocketServer.__init__")
         server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         server.bind(("", port))
         server.listen(connections)
         self.server = server
     
+    def close(self):
+        self.stop()
+        print "close"
+        #self.server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        self.server.shutdown(socket.SHUT_RDWR)
+        self.server.close()
+        
     def run(self, thread):
         self.run = True
         while self.run:
@@ -187,7 +195,7 @@ if __name__ == "__main__":
             self.send_ascii(dumps([False, -1]))
 
         def run(self):
-            code to test receiving messages 
+            #code to test receiving messages 
             wsf = WebSocketFrame(self.channel)   
             while True:
                 wsf.recv_message()
@@ -199,6 +207,10 @@ if __name__ == "__main__":
     import signal
 
     signal.signal(signal.SIGHUP, handler)  
-
+    
     wss = WebSocketServer(9999)
-    wss.run(DemoServer)
+    try:
+        wss.run(DemoServer)
+    except KeyboardInterrupt:
+        wss.close()
+        pass
